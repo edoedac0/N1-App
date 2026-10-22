@@ -14,6 +14,7 @@
   var channelLoadId = 0;
   var hideTimer = null;
   var errorTimer = null;
+  var badgeTimer = null;
   var paused = false;
   var playbackReady = false;
   var usingAvplay = !!(window.webapis && webapis.avplay);
@@ -33,6 +34,7 @@
   var channelList = document.getElementById("channelList");
   var channelButtons = [];
   var fallbackVideo = document.getElementById("fallbackVideo");
+  var channelBadge = document.getElementById("channelBadge");
   var pauseButton = document.getElementById("pauseButton");
   var playerState = document.getElementById("playerState");
   var retryButton = document.getElementById("retryButton");
@@ -159,7 +161,14 @@
     else { renderThemeFocus(); }
   }
 
-  function clearTimers() { clearTimeout(hideTimer); clearTimeout(errorTimer); }
+  function clearTimers() { clearTimeout(hideTimer); clearTimeout(errorTimer); clearTimeout(badgeTimer); }
+  function showChannelBadge() {
+    if (!channels[currentIndex]) { return; }
+    clearTimeout(badgeTimer);
+    channelBadge.textContent = "N1 · " + (channels[currentIndex].id === "ba" ? "BiH" : channels[currentIndex].shortName);
+    channelBadge.className = "channel-badge";
+    badgeTimer = setTimeout(function () { channelBadge.className = "channel-badge hidden"; }, 3000);
+  }
   function showPauseControl() {
     clearTimeout(hideTimer);
     pauseButton.className = "pause-control" + (paused ? " is-paused" : "");
@@ -175,6 +184,7 @@
     document.getElementById("stateDetail").textContent = detail;
     retryButton.className = isError ? "retry-button focused" : "retry-button hidden";
     pauseButton.className = "pause-control hidden";
+    channelBadge.className = "channel-badge hidden";
   }
   function hideState() {
     playerState.className = "player-state hidden";
@@ -190,6 +200,7 @@
     paused = false;
     playbackReady = false;
     pauseButton.className = "pause-control hidden";
+    channelBadge.className = "channel-badge hidden";
     if (browserHls) { browserHls.destroy(); browserHls = null; }
     if (browserVideoActive) {
       fallbackVideo.pause();
@@ -271,7 +282,7 @@
         avplayOpen = true;
         try { webapis.avplay.setStreamingProperty("ADAPTIVE_INFO", "STARTBITRATE=HIGHEST"); } catch (ignore) {}
         webapis.avplay.setDisplayRect(0, 0, 1920, 1080);
-        webapis.avplay.setDisplayMethod("PLAYER_DISPLAY_MODE_LETTER_BOX");
+        webapis.avplay.setDisplayMethod("PLAYER_DISPLAY_MODE_FULL_SCREEN");
         webapis.avplay.setListener({
           onbufferingstart: function () { if (id === loadId) { showState("Povezivanje…", "Učitavanje programa uživo", false); } },
           onbufferingcomplete: function () { if (id === loadId && playbackReady) { clearTimeout(errorTimer); hideState(); } },
@@ -280,7 +291,7 @@
         });
         webapis.avplay.prepareAsync(function () {
           if (id !== loadId) { return; }
-          try { webapis.avplay.play(); playbackReady = true; clearTimeout(errorTimer); hideState(); }
+          try { webapis.avplay.play(); playbackReady = true; clearTimeout(errorTimer); hideState(); showChannelBadge(); }
           catch (err) { failPlayback(err.message, id); }
         }, function () { failPlayback("Strim nije dostupan na ovom TV-u ili u vašoj regiji.", id); });
       } catch (err2) { failPlayback(err2.message, id); }
@@ -289,7 +300,15 @@
     }
   }
 
-  fallbackVideo.addEventListener("playing", function () { if (screen === "player") { playbackReady = true; paused = false; clearTimeout(errorTimer); hideState(); } });
+  fallbackVideo.addEventListener("playing", function () {
+    if (screen !== "player" || !browserVideoActive) { return; }
+    var firstFrame = !playbackReady;
+    playbackReady = true;
+    paused = false;
+    clearTimeout(errorTimer);
+    hideState();
+    if (firstFrame) { showChannelBadge(); }
+  });
   fallbackVideo.addEventListener("error", function () { failPlayback("Preglednik ne podržava strim ili je trenutno nedostupan.", loadId); });
 
   function changePause(mode) {

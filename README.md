@@ -2,7 +2,7 @@
 
 A minimal Samsung TV web app for Tizen 5.5 and newer. The home screen has **Gledaj uživo** and **N1 TV**. The latter is intentionally inactive. Live TV offers N1 Bosnia and Herzegovina, Croatia, and Serbia.
 
-The interface starts in light mode, with a white background and a blue spinner only while video connects. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. The video screen is clear during playback; OK or the remote Play/Pause key pauses and resumes it.
+The interface starts in light mode, with a white background and a blue spinner only while video connects. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. Tuning to a channel briefly shows a translucent `N1 · BiH/Hrvatska/Srbija` label, then leaves the video clear. OK or the remote Play/Pause key pauses and resumes it.
 
 The logo asset is downloaded from [N1's own website](https://n1info.ba/media/original_images/n1.max-800x600.original.original.svg) and kept locally as `n1-logo.svg` so the TV interface does not depend on the logo host at runtime.
 
@@ -58,8 +58,12 @@ The three URLs in `channels.json` point to United Cloud HLS endpoints. The Bosni
 
 ### Picture quality
 
-The highest variant published by each of these three public feeds is **720×576 at 25 fps and about 1.5 Mb/s**. A sampled segment was progressive H.264 with a 16:9 display aspect ratio (anamorphic pixels). The other variants are 480×384, 360×288, and 240×192. The player now begins with the top variant on AVPlay and hls.js, while leaving adaptive switching available for weak connections. It preserves the 16:9 picture with letterboxing instead of cropping or stretching it.
+The highest variant published by each of these three public feeds is **720×576 at 25 fps and about 1.5 Mb/s**. Sampled segments from all three channels were progressive H.264 with a 64:45 pixel aspect ratio, yielding a **16:9 display image**. The other variants are 480×384, 360×288, and 240×192. The player begins with the top variant on AVPlay and hls.js, while leaving adaptive switching available for weak connections. The browser player places the anamorphic video into a centered 16:9 frame; AVPlay fills the TV's 16:9 display rectangle. This avoids a narrow, almost square picture.
 
 The N1/Nova diaspora site uses the same Serbia feed. Candidate higher-bitrate United Cloud endpoint names returned HTTP 403 in a direct check; no accessible HD replacement was verified. Display scaling, CSS filters, and upconverting cannot recover detail absent from the source. If N1 publishes an accessible HD HLS master in the future, replacing the URL in GitHub `channels.json` is sufficient; no app rebuild is needed.
 
 Sources: [N1 Bosnia live](https://n1info.ba/n1-tv-live-stream/), [N1 Croatia live](https://n1info.hr/n1-tv-live-stream/), [N1/Nova diaspora live](https://n1nova.live/n1-uzivo.html), [N1 Serbia live](https://n1info.rs/n1-tv-live-stream/), [Samsung adaptive streaming guide](https://developer.samsung.com/smarttv/develop/guides/multimedia/adaptive-streaming.html), [Samsung AVPlay guide](https://developer.samsung.com/smarttv/develop/guides/multimedia/media-playback/using-avplay.html), [Samsung remote guide](https://developer.samsung.com/smarttv/develop/guides/user-interaction/remote-control.html).
+
+## Architecture
+
+[Nuvio Native Legacy](https://github.com/iqui27/nuvio-native-legacy) is primarily a C/SDL2/GLES2 application. It also ships a native Tizen `.tpk` and a C-to-WebAssembly `.wgt`; its Rust code is a small MKV parsing component. This N1 app has only three channels and already uses AVPlay for hardware video playback. Rewriting its menu in Rust/WebAssembly would add a runtime and a JavaScript bridge without improving the source stream or decoder. The app therefore stays a small Tizen web app.
