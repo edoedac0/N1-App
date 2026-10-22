@@ -15,6 +15,9 @@
   var paused = false;
   var playbackReady = false;
   var usingAvplay = !!(window.webapis && webapis.avplay);
+  var browserHls = null;
+  var hlsScriptLoading = false;
+  var hlsScriptCallbacks = [];
   var fallbackVideo = document.getElementById("fallbackVideo");
   var pauseButton = document.getElementById("pauseButton");
   var playerState = document.getElementById("playerState");
@@ -159,6 +162,7 @@
     paused = false;
     playbackReady = false;
     pauseButton.className = "pause-control hidden";
+    if (browserHls) { browserHls.destroy(); browserHls = null; }
     fallbackVideo.pause();
     fallbackVideo.removeAttribute("src");
     fallbackVideo.load();
@@ -166,6 +170,55 @@
       try { webapis.avplay.stop(); } catch (ignore) {}
       try { webapis.avplay.close(); } catch (ignore2) {}
     }
+  }
+  function loadHlsScript(done) {
+    if (window.Hls) { done(null); return; }
+    hlsScriptCallbacks.push(done);
+    if (hlsScriptLoading) { return; }
+    hlsScriptLoading = true;
+    var script = document.createElement("script");
+    script.src = "vendor/hls.light.min.js";
+    script.onload = function () { completeHlsScript(window.Hls ? null : new Error("HLS biblioteka se nije učitala.")); };
+    script.onerror = function () { completeHlsScript(new Error("HLS biblioteka nije dostupna.")); };
+    document.head.appendChild(script);
+  }
+  function completeHlsScript(error) {
+    hlsScriptLoading = false;
+    var callbacks = hlsScriptCallbacks.splice(0);
+    for (var i = 0; i < callbacks.length; i++) { callbacks[i](error); }
+  }
+  function playInBrowser(url, id) {
+    fallbackVideo.className = "fallback-video";
+    if (fallbackVideo.canPlayType("application/vnd.apple.mpegurl")) {
+      fallbackVideo.src = url;
+      var nativePromise = fallbackVideo.play();
+      if (nativePromise && nativePromise.catch) { nativePromise.catch(function () { failPlayback("Preglednik nije mogao pokrenuti strim.", id); }); }
+      return;
+    }
+    loadHlsScript(function (error) {
+      if (id !== loadId || screen !== "player") { return; }
+      if (error || !window.Hls || !Hls.isSupported()) { failPlayback("Preglednik ne podržava ovaj HLS strim.", id); return; }
+      browserHls = new Hls({ autoStartLoad: false, capLevelToPlayerSize: false });
+      browserHls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+        if (id !== loadId) { return; }
+        var best = 0;
+        for (var i = 1; i < data.levels.length; i++) {
+          var candidate = data.levels[i];
+          var current = data.levels[best];
+          if ((candidate.width * candidate.height > current.width * current.height) ||
+              (candidate.width * candidate.height === current.width * current.height && candidate.bitrate > current.bitrate)) { best = i; }
+        }
+        browserHls.startLevel = best;
+        browserHls.startLoad();
+        var promise = fallbackVideo.play();
+        if (promise && promise.catch) { promise.catch(function () { failPlayback("Preglednik nije mogao pokrenuti strim.", id); }); }
+      });
+      browserHls.on(Hls.Events.ERROR, function (event, data) {
+        if (data.fatal) { failPlayback("HLS strim nije dostupan u pregledniku.", id); }
+      });
+      browserHls.loadSource(url);
+      browserHls.attachMedia(fallbackVideo);
+    });
   }
   function startChannel(index) {
     if (!channels[index]) { return; }
@@ -182,6 +235,7 @@
       try {
         fallbackVideo.className = "fallback-video hidden";
         webapis.avplay.open(url);
+        try { webapis.avplay.setStreamingProperty("ADAPTIVE_INFO", "STARTBITRATE=HIGHEST"); } catch (ignore) {}
         webapis.avplay.setDisplayRect(0, 0, 1920, 1080);
         webapis.avplay.setDisplayMethod("PLAYER_DISPLAY_MODE_LETTER_BOX");
         webapis.avplay.setListener({
@@ -197,10 +251,7 @@
         }, function () { failPlayback("Strim nije dostupan na ovom TV-u ili u vašoj regiji.", id); });
       } catch (err2) { failPlayback(err2.message, id); }
     } else {
-      fallbackVideo.className = "fallback-video";
-      fallbackVideo.src = url;
-      var promise = fallbackVideo.play();
-      if (promise && promise.catch) { promise.catch(function () { failPlayback("Preglednik ne podržava ovaj HLS strim. Koristite Samsung TV.", id); }); }
+      playInBrowser(url, id);
     }
   }
 

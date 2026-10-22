@@ -48,10 +48,16 @@ The signed package is `dist/N1 TV.wgt`. A Samsung TV certificate profile configu
 | Back | Player → channels → home; exits from home |
 | OK on a playback error | Retry the stream |
 
-The app uses Samsung AVPlay for HLS on TV. A basic HTML video fallback is present for browser inspection, but desktop browser HLS support varies.
+The app uses Samsung AVPlay for HLS on TV and requests the highest available quality at startup. Browsers with native HLS use it directly; other browsers use a locally bundled copy of [hls.js 1.7.3](https://github.com/video-dev/hls.js/releases/tag/v1.7.3). The browser player also starts at the highest listed variant, then adapts if the connection cannot sustain it. The library's MIT license is in `vendor/hls-LICENSE`.
 
 ## Stream sources
 
-The three URLs in `channels.json` point to United Cloud HLS endpoints. The Bosnia and Croatia endpoints appear in N1's own live page source. The Serbia endpoint is listed in public IPTV directories. On 22 October 2026, all three returned HLS master and media playlists plus MPEG-TS video segments during a network check. N1's Serbia live page itself currently displays a stream unavailable message, so actual playback can depend on location or changes at the source. The app displays a retry message when a stream fails.
+The three URLs in `channels.json` point to United Cloud HLS endpoints. The Bosnia and Croatia endpoints appear in N1's own live page source. The Serbia endpoint appears on the official [N1/Nova diaspora page](https://n1nova.live/n1-uzivo.html). On 22 October 2026, all three returned HLS master and media playlists plus MPEG-TS video segments during a network check. N1's Serbia live page itself currently displays a stream unavailable message, so actual playback can depend on location or changes at the source. The app displays a retry message when a stream fails.
 
-Sources: [N1 Bosnia live](https://n1info.ba/n1-tv-live-stream/), [N1 Croatia live](https://n1info.hr/n1-tv-live-stream/), [N1 Serbia live](https://n1info.rs/n1-tv-live-stream/), [GitHub IPTV listing](https://github.com/mayaxcn/getM3U8/blob/master/tv.txt), [Samsung AVPlay guide](https://developer.samsung.com/smarttv/develop/guides/multimedia/media-playback/using-avplay.html), [Samsung remote guide](https://developer.samsung.com/smarttv/develop/guides/user-interaction/remote-control.html).
+### Picture quality
+
+The highest variant published by each of these three public feeds is **720×576 at 25 fps and about 1.5 Mb/s**. A sampled segment was progressive H.264 with a 16:9 display aspect ratio (anamorphic pixels). The other variants are 480×384, 360×288, and 240×192. The player now begins with the top variant on AVPlay and hls.js, while leaving adaptive switching available for weak connections. It preserves the 16:9 picture with letterboxing instead of cropping or stretching it.
+
+The N1/Nova diaspora site uses the same Serbia feed. Candidate higher-bitrate United Cloud endpoint names returned HTTP 403 in a direct check; no accessible HD replacement was verified. Display scaling, CSS filters, and upconverting cannot recover detail absent from the source. If N1 publishes an accessible HD HLS master in the future, replacing the URL in GitHub `channels.json` is sufficient; no app rebuild is needed.
+
+Sources: [N1 Bosnia live](https://n1info.ba/n1-tv-live-stream/), [N1 Croatia live](https://n1info.hr/n1-tv-live-stream/), [N1/Nova diaspora live](https://n1nova.live/n1-uzivo.html), [N1 Serbia live](https://n1info.rs/n1-tv-live-stream/), [Samsung adaptive streaming guide](https://developer.samsung.com/smarttv/develop/guides/multimedia/adaptive-streaming.html), [Samsung AVPlay guide](https://developer.samsung.com/smarttv/develop/guides/multimedia/media-playback/using-avplay.html), [Samsung remote guide](https://developer.samsung.com/smarttv/develop/guides/user-interaction/remote-control.html).
