@@ -11,9 +11,10 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 STAGE="$ROOT/.tizen-stage"
 OUTPUT="$ROOT/dist"
 
+"$ROOT/build-core.sh"
 rm -rf "$STAGE"
 mkdir -p "$STAGE" "$OUTPUT"
-cp "$ROOT/config.xml" "$ROOT/index.html" "$ROOT/style.css" "$ROOT/app.js" "$ROOT/settings.js" "$ROOT/icon.png" "$ROOT/n1-logo.svg" "$STAGE/"
+cp "$ROOT/config.xml" "$ROOT/index.html" "$ROOT/style.css" "$ROOT/core-data.js" "$ROOT/bridge.js" "$ROOT/settings.js" "$ROOT/icon.png" "$ROOT/n1-logo.svg" "$STAGE/"
 
 tizen build-web -- "$STAGE" -out .tizen-build
 tizen package -t wgt -s "$PROFILE" -- "$STAGE/.tizen-build" -o "$OUTPUT"

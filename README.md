@@ -1,10 +1,10 @@
 # N1 TV for Samsung Tizen
 
-A minimal Samsung TV web app for Tizen 5.5 and newer. The home screen has **Gledaj uživo** and **N1 TV**. The latter is intentionally inactive. Live TV offers N1 Bosnia and Herzegovina, Croatia, and Serbia.
+A minimal Samsung TV app for Tizen 5.5 and newer. Its application logic is written in portable C and compiled to WebAssembly inside a `.wgt` web app. The home screen has **Gledaj uživo** and **N1 TV**. The latter is intentionally inactive. Live TV offers N1 Bosnia and Herzegovina, Croatia, and Serbia.
 
 The interface starts in light mode, with a white background and a blue spinner only while video connects. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. Tuning to a channel briefly shows a translucent `N1 · BiH/Hrvatska/Srbija` label, then leaves the video clear. OK or the remote Play/Pause key pauses and resumes it.
 
-The logo asset is downloaded from [N1's own website](https://n1info.ba/media/original_images/n1.max-800x600.original.original.svg) and kept locally as `n1-logo.svg` so the TV interface does not depend on the logo host at runtime.
+The logo asset is downloaded from [N1's own website](https://n1info.ba/media/original_images/n1.max-800x600.original.original.svg) and kept locally as `n1-logo.svg` so the TV interface does not depend on the logo host at runtime. The TV launcher icon has a smaller centered N1 mark with more white space.
 
 ## Publish the channel file
 
@@ -24,13 +24,15 @@ If the file cannot be reached, the app shows an error on the channel list. There
 
 ## Build and install
 
-Open this folder as a Tizen TV web application in Tizen Studio, or use the included CLI script:
+Use the included CLI script to stage and sign the Tizen TV web app:
 
 ```sh
 ./build.sh YOUR_CERTIFICATE_PROFILE
 ```
 
-The signed package is `dist/N1 TV.wgt`. A Samsung TV certificate profile configured for your device is required to install it. The script copies only the TV app files to a staging directory, leaving `channels.json` and the browser-only hls.js library out of the package. The minimum Tizen version is set to 5.5 in `config.xml`.
+The signed package is `dist/N1 TV.wgt`. A Samsung TV certificate profile configured for your device is required to install it. The build first compiles `src/core.c` to `core.wasm` and generates `core-data.js`, which embeds the small module so even a local `file://` preview can boot without fetching another file. The staging folder `.tizen-stage/` is also suitable for Tizen Studio. The package includes `core-data.js` and leaves out the duplicate `core.wasm`, `channels.json`, and browser-only hls.js library. The minimum Tizen version is 5.5 in `config.xml`.
+
+To rebuild only the C core, run `./build-core.sh`. It needs Clang with a WebAssembly linker. The generated `core-data.js` is committed so Tizen Studio can package the project without a separate C build step. Run native logic tests with `cc -std=c99 -O2 -Wall -Wextra -Werror src/core.c tests/core_test.c -o /tmp/n1-core-test && /tmp/n1-core-test`, then the JavaScript/WebAssembly integration test with `node tests/bridge_test.js`.
 
 ## Remote control
 
@@ -64,6 +66,8 @@ The N1/Nova diaspora site uses the same Serbia feed. Candidate higher-bitrate Un
 
 Sources: [N1 Bosnia live](https://n1info.ba/n1-tv-live-stream/), [N1 Croatia live](https://n1info.hr/n1-tv-live-stream/), [N1/Nova diaspora live](https://n1nova.live/n1-uzivo.html), [N1 Serbia live](https://n1info.rs/n1-tv-live-stream/), [Samsung adaptive streaming guide](https://developer.samsung.com/smarttv/develop/guides/multimedia/adaptive-streaming.html), [Samsung AVPlay guide](https://developer.samsung.com/smarttv/develop/guides/multimedia/media-playback/using-avplay.html), [Samsung remote guide](https://developer.samsung.com/smarttv/develop/guides/user-interaction/remote-control.html).
 
-## Architecture
+## Architecture and TV ports
 
-[Nuvio Native Legacy](https://github.com/iqui27/nuvio-native-legacy) is primarily a C/SDL2/GLES2 application. It also ships a native Tizen `.tpk` and a C-to-WebAssembly `.wgt`; its Rust code is a small MKV parsing component. This N1 app has only three channels and already uses AVPlay for hardware video playback. Rewriting its menu in Rust/WebAssembly would add a runtime and a JavaScript bridge without improving the source stream or decoder. The app therefore stays a small Tizen web app.
+`src/core.c` owns channel JSON validation, screens, focus, remote key behavior, theme state, player state, and channel switching. It has no Tizen, DOM, network, or media dependencies. A port supplies the eight `host_*` functions in `src/core.h`. `bridge.js` is the Samsung/browser adapter: it renders the existing HTML interface, fetches the GitHub file, and calls AVPlay (or browser HLS for preview). The WebAssembly core is about 7 KB. The adapter is intentionally limited to capabilities C cannot call directly in a web app.
+
+Samsung [supports WebAssembly in TV web apps from Tizen 5.5](https://developer.samsung.com/smarttv/develop/extension-libraries/webassembly/overview.html). This keeps a single `.wgt` target for the requested 5.5+ range and preserves the verified AVPlay path. Samsung's [Smart TV testing FAQ](https://developer.samsung.com/smarttv/develop/faq/application-testing.html) says `.tpk` native packages are not supported in that TV testing path. [Nuvio Native Legacy](https://github.com/iqui27/nuvio-native-legacy) uses a C core with both `.wgt` and experimental `.tpk` front ends; its older-TV `.tpk` notes document signing and native-library loading issues. The portable C core here makes another TV adapter possible without changing the channel/navigation logic. Video decoding still uses each TV's media API, so C does not improve the source stream's resolution.

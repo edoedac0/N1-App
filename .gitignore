@@ -1,4 +1,5 @@
 .tizen-stage/
 .tizen-output/
 dist/
+core.wasm
 .DS_Store
