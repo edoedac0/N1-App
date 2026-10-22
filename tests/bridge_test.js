@@ -17,8 +17,9 @@ function makeDom() {
   function element(id) {
     if (!elements[id]) {
       const value = {
-        id, className: '', style: {}, children: [], textContent: '', attributes: {},
+        id, style: {}, children: [], textContent: '', attributes: {}, classWrites: 0,
         setAttribute(k, v) { this.attributes[k] = v; },
+        getAttribute(k) { return this.attributes[k] || null; },
         removeAttribute(k) { delete this.attributes[k]; },
         addEventListener(k, fn) { this['on' + k] = fn; },
         appendChild(child) { this.children.push(child); },
@@ -28,6 +29,11 @@ function makeDom() {
         play() { this.paused = false; if (this.onplaying) this.onplaying(); return Promise.resolve(); },
         canPlayType() { return ''; }
       };
+      let classValue = '';
+      Object.defineProperty(value, 'className', {
+        get() { return classValue; },
+        set(next) { classValue = next; this.classWrites++; }
+      });
       Object.defineProperty(value, 'innerHTML', {
         set(html) { this._html = html; this.children = []; if (html && html.indexOf('source-error') !== -1) this.firstChild = element('sourceError'); },
         get() { return this._html; }
@@ -103,9 +109,17 @@ async function run(withAvplay) {
   assert.equal(fetches,1);
   assert.equal(element('channelList').children.length,3);
   assert(keys.includes('MediaPlayPause') && keys.includes('ChannelUp'));
+  const homeWrites = element('home').classWrites;
+  key(39);
+  assert.equal(element('home').classWrites,homeWrites);
+  key(37);
   element('watchButton').onclick();
+  const channelWrites = element('channels').classWrites;
+  key(39);
+  assert.equal(element('channels').classWrites,channelWrites);
+  key(37);
   key(13);
-  assert.equal(element('channelBadge').textContent,'N1 · BiH');
+  assert.equal(element('channelBadge').textContent,'N1 BiH');
   assert.equal(element('channelBadge').className,'channel-badge');
   if (withAvplay) {
     assert.equal(modes[0],'PLAYER_DISPLAY_MODE_FULL_SCREEN');
@@ -124,7 +138,7 @@ async function run(withAvplay) {
   if (withAvplay) assert.equal(state,'PLAYING'); else assert.equal(element('fallbackVideo').paused,false);
   key(427);
   assert(urls[1].includes('n1hrv'));
-  assert.equal(element('channelBadge').textContent,'N1 · Hrvatska');
+  assert.equal(element('channelBadge').textContent,'N1 Hrvatska');
   key(428);
   assert(urls[2].includes('n1bos'));
   key(51);

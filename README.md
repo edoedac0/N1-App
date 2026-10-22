@@ -2,7 +2,7 @@
 
 A minimal Samsung TV app for Tizen 5.5 and newer. Its application logic is written in portable C and compiled to WebAssembly inside a `.wgt` web app. The home screen has **Gledaj uživo** and **N1 TV**. The latter is intentionally inactive. Live TV offers N1 Bosnia and Herzegovina, Croatia, and Serbia.
 
-The interface starts in light mode, with a white background and a blue spinner only while video connects. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. Tuning to a channel briefly shows a translucent `N1 · BiH/Hrvatska/Srbija` label, then leaves the video clear. OK or the remote Play/Pause key pauses and resumes it.
+The interface starts in light mode, with a white background and a blue spinner only while video connects. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. Tuning to a channel briefly shows a translucent `N1 BiH`, `N1 Hrvatska`, or `N1 Srbija` label, then leaves the video clear. OK or the remote Play/Pause key pauses and resumes it. Remote focus changes are immediate, without menu transitions or scale effects.
 
 On Samsung TVs, AVPlay renders video on a hardware plane behind the web page. The app includes the required `application/avplayer` object and keeps the page transparent during playback, allowing the picture to show through while the pause and channel overlays remain visible. This fixes audio-only playback caused by an opaque page or missing AVPlay object.
 

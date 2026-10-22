@@ -4,6 +4,7 @@
 
   var api, memory, decoder;
   var cards = [];
+  var sourceView = "";
   var sourceMessage = "Kanali nisu dostupni. Pritisnite OK za ponovni pokušaj.";
   var videoMessage = "Pokušajte ponovo ili izaberite drugi kanal.";
   var playToken = -1;
@@ -38,10 +39,14 @@
   function channelName(index) { return readString(api.n1_string_short(index)); }
   function channelUrl(index) { return readString(api.n1_string_url(index)); }
   function action(kind, index) { api.n1_action(kind, index || 0); }
+  function setClass(element, value) { if (element.className !== value) { element.className = value; } }
+  function setText(element, value) { if (element.textContent !== value) { element.textContent = value; } }
+  function setLabel(element, value) { if (element.getAttribute("aria-label") !== value) { element.setAttribute("aria-label", value); } }
 
   function buildCards() {
     if (cards.length) { return; }
     channelList.innerHTML = "";
+    sourceView = "ready";
     for (var i = 0; i < 3; i++) {
       var button = document.createElement("button");
       button.type = "button";
@@ -59,35 +64,42 @@
     var video = api.n1_video_status();
     var dark = api.n1_theme();
     var themeFocused = api.n1_theme_focus();
-    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
-    themeToggle.setAttribute("aria-label", dark ? "Uključi svijetli način" : "Uključi tamni način");
-    themeToggle.className = "theme-toggle" + (themeFocused ? " focused" : "");
-    app.className = "app" + (screen === 2 ? " playing" : "");
-    for (var i = 0; i < 3; i++) { screens[i].className = "screen " + ["home", "channels", "player"][i] + (i === screen ? " active" : ""); }
-    watchButton.className = "action action-primary" + (!themeFocused && api.n1_home_focus() === 0 ? " focused" : "");
-    n1Button.className = "action action-secondary" + (!themeFocused && api.n1_home_focus() === 1 ? " focused" : "");
+    if (document.documentElement.getAttribute("data-theme") !== (dark ? "dark" : "light")) { document.documentElement.setAttribute("data-theme", dark ? "dark" : "light"); }
+    setLabel(themeToggle, dark ? "Uključi svijetli način" : "Uključi tamni način");
+    setClass(themeToggle, "theme-toggle" + (themeFocused ? " focused" : ""));
+    setClass(app, "app" + (screen === 2 ? " playing" : ""));
+    for (var i = 0; i < 3; i++) {
+      var screenClass = "screen " + ["home", "channels", "player"][i] + (i === screen ? " active" : "");
+      if (i === 2 && screen === 2 && (video === 0 || video === 3)) { screenClass += video === 0 ? " loading" : " error"; }
+      setClass(screens[i], screenClass);
+    }
+    setClass(watchButton, "action action-primary" + (!themeFocused && api.n1_home_focus() === 0 ? " focused" : ""));
+    setClass(n1Button, "action action-secondary" + (!themeFocused && api.n1_home_focus() === 1 ? " focused" : ""));
     if (status === 1) {
       buildCards();
-      for (i = 0; i < cards.length; i++) { cards[i].className = "channel-card" + (!themeFocused && api.n1_channel_focus() === i ? " focused" : ""); }
+      for (i = 0; i < cards.length; i++) { setClass(cards[i], "channel-card" + (!themeFocused && api.n1_channel_focus() === i ? " focused" : "")); }
     } else if (cards.length === 0) {
-      channelList.innerHTML = status === 0 ? '<div class="source-message">Učitavanje kanala…</div>' : '<div class="source-error"></div>';
-      if (status === 2) { channelList.firstChild.textContent = sourceMessage; }
+      var nextSourceView = status === 0 ? "loading" : "error:" + sourceMessage;
+      if (sourceView !== nextSourceView) {
+        channelList.innerHTML = status === 0 ? '<div class="source-message">Učitavanje kanala…</div>' : '<div class="source-error"></div>';
+        if (status === 2) { channelList.firstChild.textContent = sourceMessage; }
+        sourceView = nextSourceView;
+      }
     }
     if (screen === 2) {
       var index = api.n1_current_index();
       var label = index === 0 ? "BiH" : channelName(index);
-      channelBadge.textContent = "N1 · " + label;
-      channelBadge.className = "channel-badge" + (api.n1_badge_visible() ? "" : " hidden");
-      pauseButton.className = "pause-control" + (video === 2 ? " is-paused" : "") + (api.n1_control_visible() ? "" : " hidden");
-      pauseButton.setAttribute("aria-label", video === 2 ? "Nastavi reprodukciju" : "Pauziraj");
+      setText(channelBadge, "N1 " + label);
+      setClass(channelBadge, "channel-badge" + (api.n1_badge_visible() ? "" : " hidden"));
+      setClass(pauseButton, "pause-control" + (video === 2 ? " is-paused" : "") + (api.n1_control_visible() ? "" : " hidden"));
+      setLabel(pauseButton, video === 2 ? "Nastavi reprodukciju" : "Pauziraj");
       if (video === 0 || video === 3) {
-        screens[2].className += video === 0 ? " loading" : " error";
-        playerState.className = video === 0 ? "player-state loading" : "player-state error";
-        document.getElementById("stateTitle").textContent = video === 0 ? "Povezivanje…" : "Program nije dostupan";
-        document.getElementById("stateDetail").textContent = video === 0 ? "Učitavanje programa uživo" : videoMessage;
-        retryButton.className = video === 3 ? "retry-button focused" : "retry-button hidden";
-      } else { playerState.className = "player-state hidden"; }
-    } else { channelBadge.className = "channel-badge hidden"; }
+        setClass(playerState, video === 0 ? "player-state loading" : "player-state error");
+        setText(document.getElementById("stateTitle"), video === 0 ? "Povezivanje…" : "Program nije dostupan");
+        setText(document.getElementById("stateDetail"), video === 0 ? "Učitavanje programa uživo" : videoMessage);
+        setClass(retryButton, video === 3 ? "retry-button focused" : "retry-button hidden");
+      } else { setClass(playerState, "player-state hidden"); }
+    } else { setClass(channelBadge, "channel-badge hidden"); }
   }
 
   function fetchChannels() {
