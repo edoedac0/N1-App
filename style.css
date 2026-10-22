@@ -44,8 +44,8 @@ html[data-theme="dark"] .theme-toggle .sun-icon{display:block}
 .app.playing{background:transparent}
 .fallback-video{position:absolute;left:50%;top:50%;width:100vw;height:56.25vw;max-width:177.7778vh;max-height:100vh;transform:translate(-50%,-50%);object-fit:fill;background:#000}
 .fallback-video.hidden{display:none}
-.channel-badge{position:absolute;z-index:2;left:42px;top:36px;padding:11px 17px;border-radius:6px;background:rgba(0,0,0,.32);color:rgba(255,255,255,.93);font-size:24px;font-weight:600;letter-spacing:.01em;pointer-events:none;opacity:1;transition:opacity .25s ease}
-.channel-badge.hidden{opacity:0;visibility:hidden}
+.channel-badge{position:absolute;z-index:2;left:42px;top:36px;padding:11px 17px;border-radius:6px;background:rgba(0,0,0,.52);color:#fff;font-size:24px;font-weight:600;letter-spacing:.01em;pointer-events:none;opacity:1;transition:opacity .28s ease-out}
+.channel-badge.hidden{opacity:0;transition:opacity .42s ease-in}
 .pause-control{position:absolute;left:50%;top:50%;z-index:2;transform:translate(-50%,-50%);width:82px;height:82px;border:0;border-radius:50%;background:rgba(0,0,0,.58);color:#fff;display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity .2s ease;cursor:pointer;pointer-events:auto}
 .pause-control.hidden{opacity:0;pointer-events:none}
 .pause-control svg{width:34px;height:34px}
