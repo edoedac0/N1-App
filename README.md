@@ -2,6 +2,8 @@
 
 A minimal Samsung TV web app for Tizen 5.5 and newer. The home screen has **Gledaj uživo** and **N1 TV**. The latter is intentionally inactive. Live TV offers N1 Bosnia and Herzegovina, Croatia, and Serbia.
 
+The interface starts in light mode, with a white background and blue loading spinner. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. The video screen is clear during playback; OK or the remote Play/Pause key pauses and resumes it.
+
 The logo asset is downloaded from [N1's own website](https://n1info.ba/media/original_images/n1.max-800x600.original.original.svg) and kept locally as `n1-logo.svg` so the TV interface does not depend on the logo host at runtime.
 
 ## Publish the channel file
@@ -37,8 +39,12 @@ The signed package is `dist/N1 TV.wgt`. A Samsung TV certificate profile configu
 | Arrows and OK | Select a menu item or channel |
 | Red key | Open the channel list |
 | 1, 2, 3 | Open Bosnia and Herzegovina, Croatia, Serbia after channels have loaded |
-| Left / right while playing | Previous / next channel |
+| Left / down while playing | Previous channel |
+| Right / up while playing | Next channel |
 | Channel − / + while playing | Previous / next channel |
+| Previous / next track | Previous / next channel |
+| OK or Play/Pause while playing | Pause or resume |
+| Pause / Play keys | Pause / resume |
 | Back | Player → channels → home; exits from home |
 | OK on a playback error | Retry the stream |
 
