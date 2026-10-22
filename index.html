@@ -11,33 +11,36 @@
 </head>
 <body>
   <div id="app" class="app">
-    <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
-    <header class="topbar">
-      <div class="brand" aria-label="N1 TV"><span class="brand-mark"><span>N</span><span>1</span></span><span class="brand-label">TV</span></div>
-      <div class="topbar-right"><span class="live-dot"></span><span>VIJESTI UŽIVO</span></div>
-    </header>
-
     <main id="home" class="screen home active" aria-label="Početna">
-      <div class="hero-copy"><div class="eyebrow"><span class="eyebrow-line"></span> REGIONALNI INFORMATIVNI KANAL</div>
-        <h1>Vijesti koje<br><em>prate vaš svijet.</em></h1>
-        <p>Tri redakcije. Jedna priča. Izaberite kanal i gledajte N1 uživo.</p>
-        <div class="home-actions"><button id="watchButton" class="action action-primary focused" type="button"><span class="play-symbol">▶</span><span>Gledaj uživo</span><span class="action-arrow">↗</span></button><button id="n1Button" class="action action-secondary" type="button">N1 TV</button></div>
+      <div class="home-center">
+        <img class="home-logo" src="n1-logo.svg" alt="N1">
+        <div class="home-actions">
+          <button id="watchButton" class="action action-primary focused" type="button">
+            <svg class="button-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M11 7.5a2 2 0 0 1 3.02-1.72l13 8.5a2 2 0 0 1 0 3.44l-13 8.5A2 2 0 0 1 11 24.5v-17Z" fill="currentColor"/></svg>
+            <span>Gledaj uživo</span>
+          </button>
+          <button id="n1Button" class="action action-secondary" type="button">
+            <svg class="button-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="4" y="7" width="24" height="17" rx="2.5" stroke="currentColor" stroke-width="2.5"/><path d="M12 28h8M16 24v4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+            <span>N1 TV</span>
+          </button>
+        </div>
       </div>
-      <div class="hero-art" aria-hidden="true"><div class="hero-ring ring-one"></div><div class="hero-ring ring-two"></div><div class="hero-n">N<span>1</span></div><div class="hero-scan"></div></div>
-      <div class="home-footer"><span>BA <b>·</b> HR <b>·</b> RS</span><span>Izaberite opciju pomoću daljinskog upravljača</span></div>
     </main>
 
     <main id="channels" class="screen channels" aria-label="Izbor kanala">
-      <div class="section-head"><span class="section-kicker">N1 / GLEDAJ UŽIVO</span><h2>Odaberite kanal<span class="red-period">.</span></h2><p>Program uživo iz tri regionalne redakcije.</p></div>
-      <div id="channelList" class="channel-list"></div>
-      <div class="screen-footer"><span id="sourceStatus">Učitavanje izvora…</span><span>OK za gledanje <b>·</b> 1–3 za direktan izbor <b>·</b> Nazad za početnu</span></div>
+      <div class="channels-center">
+        <img class="channels-logo" src="n1-logo.svg" alt="N1">
+        <h1>Gledaj uživo</h1>
+        <div id="channelList" class="channel-list"></div>
+        <p id="sourceStatus" class="source-status">Učitavanje izvora…</p>
+      </div>
     </main>
 
     <main id="player" class="screen player" aria-label="Reprodukcija uživo">
       <video id="fallbackVideo" class="fallback-video" autoplay playsinline></video>
       <div class="player-vignette"></div>
       <div id="playerChrome" class="player-chrome">
-        <div class="player-top"><div class="brand brand-small"><span class="brand-mark"><span>N</span><span>1</span></span><span class="brand-label">TV</span></div><span class="live-badge"><span class="live-dot"></span> UŽIVO</span></div>
+        <div class="player-top"><img class="player-logo" src="n1-logo.svg" alt="N1"><span class="live-badge"><span class="live-dot"></span> UŽIVO</span></div>
         <div class="player-bottom"><div class="playing-label">SADA GLEDATE</div><h2 id="playerTitle">N1</h2><div class="player-help"><span>◀ ▶ ili CH +/− promjena kanala</span><span>1–3 direktan izbor</span><span>Nazad izbor kanala</span></div></div>
       </div>
       <div id="playerState" class="player-state hidden"><div class="state-spinner"></div><div id="stateTitle">Povezivanje…</div><p id="stateDetail">Učitavanje programa uživo</p><button id="retryButton" class="retry-button hidden" type="button">Pokušaj ponovo</button></div>

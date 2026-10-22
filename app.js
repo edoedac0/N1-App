@@ -72,9 +72,8 @@
       button.type = "button";
       button.className = "channel-card" + (i === channelFocus ? " focused" : "");
       button.setAttribute("data-index", String(i));
-      button.innerHTML = '<span class="card-top"><span class="card-number">0' + (i + 1) + '</span><span class="card-code"></span></span><span class="card-name"></span><span class="card-bottom"><span>Gledaj uživo</span><span class="card-arrow">↗</span></span>';
-      button.querySelector(".card-code").textContent = item.code || item.id.toUpperCase();
-      button.querySelector(".card-name").textContent = item.shortName;
+      button.innerHTML = '<span class="channel-number">0' + (i + 1) + '</span><span class="channel-name"></span><svg class="channel-play" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M11 7.5a2 2 0 0 1 3.02-1.72l13 8.5a2 2 0 0 1 0 3.44l-13 8.5A2 2 0 0 1 11 24.5v-17Z" fill="currentColor"/></svg>';
+      button.querySelector(".channel-name").textContent = item.shortName;
       button.onclick = (function (index) { return function () { startChannel(index); }; })(i);
       list.appendChild(button);
     }
@@ -101,7 +100,7 @@
       channels = result;
       channelFocus = 0;
       renderChannels();
-      document.getElementById("sourceStatus").textContent = "Izvor: GitHub · 3 kanala";
+      document.getElementById("sourceStatus").textContent = "";
     });
   }
 
