@@ -4,6 +4,8 @@ A minimal Samsung TV app for Tizen 5.5 and newer. Its application logic is writt
 
 The interface starts in light mode, with a white background and a blue spinner only while video connects. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. Tuning to a channel briefly shows a translucent `N1 · BiH/Hrvatska/Srbija` label, then leaves the video clear. OK or the remote Play/Pause key pauses and resumes it.
 
+On Samsung TVs, AVPlay renders video on a hardware plane behind the web page. The app includes the required `application/avplayer` object and keeps the page transparent during playback, allowing the picture to show through while the pause and channel overlays remain visible. This fixes audio-only playback caused by an opaque page or missing AVPlay object.
+
 The logo asset is downloaded from [N1's own website](https://n1info.ba/media/original_images/n1.max-800x600.original.original.svg) and kept locally as `n1-logo.svg` so the TV interface does not depend on the logo host at runtime. The TV launcher icon has a smaller centered N1 mark with more white space.
 
 ## Publish the channel file

@@ -207,7 +207,10 @@
       });
       player.prepareAsync(function () {
         if (token !== playToken) { return; }
-        try { player.play(); avplayStarted = true; clearPlaybackTimer(); api.n1_video_ready(token); }
+        try {
+          player.setDisplayRect(0, 0, 1920, 1080);
+          player.play(); avplayStarted = true; clearPlaybackTimer(); api.n1_video_ready(token);
+        }
         catch (error) { failVideo(error.message, token); }
       }, function () { failVideo("Strim nije dostupan na ovom TV-u ili u vašoj regiji.", token); });
     } catch (error2) { failVideo(error2.message, token); }

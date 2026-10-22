@@ -4,6 +4,12 @@ const assert = require('assert');
 
 const root = __dirname + '/..';
 const json = Buffer.from(fs.readFileSync(root + '/channels.json'));
+const html = fs.readFileSync(root + '/index.html', 'utf8');
+const css = fs.readFileSync(root + '/style.css', 'utf8');
+assert(html.indexOf('type="application/avplayer"') > 0);
+assert(html.indexOf('type="application/avplayer"') < html.indexOf('id="app"'));
+assert(css.includes('html,body{width:100%;height:100%;margin:0;overflow:hidden;background:transparent'));
+assert(css.includes('.app.playing{background:transparent}'));
 
 function makeDom() {
   const elements = {};
@@ -43,7 +49,7 @@ function makeDom() {
 
 async function run(withAvplay) {
   const {element, document} = makeDom();
-  const keys = [], urls = [], modes = [], properties = [];
+  const keys = [], urls = [], modes = [], properties = [], displayRects = [];
   let fetches = 0, state = 'NONE', hlsInstance;
   class XHR {
     open() {}
@@ -57,7 +63,7 @@ async function run(withAvplay) {
   const avplay = {
     open(url) { urls.push(url); state = 'IDLE'; },
     setStreamingProperty(k,v) { properties.push([k,v]); },
-    setDisplayRect() {},
+    setDisplayRect(x,y,w,h) { displayRects.push([x,y,w,h]); },
     setDisplayMethod(value) { modes.push(value); },
     setListener() {},
     prepareAsync(ok) { state = 'READY'; ok(); },
@@ -103,6 +109,8 @@ async function run(withAvplay) {
   assert.equal(element('channelBadge').className,'channel-badge');
   if (withAvplay) {
     assert.equal(modes[0],'PLAYER_DISPLAY_MODE_FULL_SCREEN');
+    assert.equal(displayRects.length,2);
+    assert.deepEqual(displayRects[1],[0,0,1920,1080]);
     assert.deepEqual(properties[0],['ADAPTIVE_INFO','STARTBITRATE=HIGHEST']);
     assert.equal(state,'PLAYING');
   } else {
