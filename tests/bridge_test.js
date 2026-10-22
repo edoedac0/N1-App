@@ -55,7 +55,7 @@ function makeDom() {
 
 async function run(withAvplay) {
   const {element, document} = makeDom();
-  const keys = [], urls = [], modes = [], properties = [], displayRects = [];
+  const keys = [], urls = [], modes = [], properties = [], displayRects = [], avplayCalls = [];
   let fetches = 0, state = 'NONE', hlsInstance;
   class XHR {
     open() {}
@@ -67,13 +67,13 @@ async function run(withAvplay) {
     }
   }
   const avplay = {
-    open(url) { urls.push(url); state = 'IDLE'; },
+    open(url) { urls.push(url); state = 'IDLE'; avplayCalls.push('open'); },
     setStreamingProperty(k,v) { properties.push([k,v]); },
-    setDisplayRect(x,y,w,h) { displayRects.push([x,y,w,h]); },
-    setDisplayMethod(value) { modes.push(value); },
-    setListener() {},
-    prepareAsync(ok) { state = 'READY'; ok(); },
-    play() { state = 'PLAYING'; },
+    setDisplayRect(x,y,w,h) { displayRects.push([x,y,w,h]); avplayCalls.push('rect'); },
+    setDisplayMethod(value) { modes.push(value); avplayCalls.push('mode'); },
+    setListener() { avplayCalls.push('listener'); },
+    prepareAsync(ok) { state = 'READY'; avplayCalls.push('prepare'); ok(); },
+    play() { state = 'PLAYING'; avplayCalls.push('play'); },
     pause() { state = 'PAUSED'; },
     stop() { state = 'IDLE'; },
     close() { state = 'NONE'; }
@@ -123,8 +123,9 @@ async function run(withAvplay) {
   assert.equal(element('channelBadge').className,'channel-badge');
   if (withAvplay) {
     assert.equal(modes[0],'PLAYER_DISPLAY_MODE_FULL_SCREEN');
-    assert.equal(displayRects.length,2);
-    assert.deepEqual(displayRects[1],[0,0,1920,1080]);
+    assert.equal(displayRects.length,1);
+    assert.deepEqual(displayRects[0],[0,0,1920,1080]);
+    assert.deepEqual(avplayCalls.slice(0,6),['open','listener','mode','prepare','rect','play']);
     assert.deepEqual(properties[0],['ADAPTIVE_INFO','STARTBITRATE=HIGHEST']);
     assert.equal(state,'PLAYING');
   } else {

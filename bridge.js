@@ -209,14 +209,13 @@
       player.open(url);
       avplayOpen = true;
       try { player.setStreamingProperty("ADAPTIVE_INFO", "STARTBITRATE=HIGHEST"); } catch (ignore) {}
-      player.setDisplayRect(0, 0, 1920, 1080);
-      player.setDisplayMethod("PLAYER_DISPLAY_MODE_FULL_SCREEN");
       player.setListener({
         onbufferingstart: function () { if (token === playToken) { api.n1_video_buffering(token); } },
         onbufferingcomplete: function () { if (token === playToken && avplayStarted && api.n1_video_status() === 0) { clearPlaybackTimer(); api.n1_video_ready(token); } },
         onstreamcompleted: function () { failVideo("Prijenos je završen. Pokušajte ponovo.", token); },
         onerror: function () { failVideo("Nije moguće pokrenuti ovaj strim.", token); }
       });
+      player.setDisplayMethod("PLAYER_DISPLAY_MODE_FULL_SCREEN");
       player.prepareAsync(function () {
         if (token !== playToken) { return; }
         try {

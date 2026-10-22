@@ -54,7 +54,7 @@ To rebuild only the C core, run `./build-core.sh`. It needs Clang with a WebAsse
 
 The app uses Samsung AVPlay for HLS on TV and requests the highest available quality at startup. Browsers with native HLS use it directly; other browsers use a local copy of [hls.js 1.7.3](https://github.com/video-dev/hls.js/releases/tag/v1.7.3), loaded only when needed. The browser player also starts at the highest listed variant, then adapts if the connection cannot sustain it. Its forward and back buffers are limited to 20 seconds. The library's MIT license is in `vendor/hls-LICENSE`.
 
-The three channel buttons are created once when the startup fetch finishes and reused as the remote focus moves. Leaving playback releases the decoder and buffers; putting the app in the background closes the stream and returns to the channel list. The video overlay is a single centered button, with no full-screen wrapper. Layout uses CSS supported by Tizen 5.5's Chromium 69 engine rather than newer `inset` and flexbox `gap` shortcuts.
+The three channel buttons are created once when the startup fetch finishes and reused as the remote focus moves. Focus changes write only the DOM values that actually changed; menu animations do not delay remote feedback. Leaving playback releases the decoder and buffers; putting the app in the background closes the stream and returns to the channel list. AVPlay prepares asynchronously and receives its 1920×1080 display rectangle once, immediately before playback. The video overlay is a single centered button, with no full-screen wrapper. Layout uses CSS supported by Tizen 5.5's Chromium 69 engine rather than newer `inset` and flexbox `gap` shortcuts.
 
 ## Stream sources
 
