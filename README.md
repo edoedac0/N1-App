@@ -2,7 +2,7 @@
 
 A minimal Samsung TV web app for Tizen 5.5 and newer. The home screen has **Gledaj uživo** and **N1 TV**. The latter is intentionally inactive. Live TV offers N1 Bosnia and Herzegovina, Croatia, and Serbia.
 
-The interface starts in light mode, with a white background and blue loading spinner. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. The video screen is clear during playback; OK or the remote Play/Pause key pauses and resumes it.
+The interface starts in light mode, with a white background and a blue spinner only while video connects. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. The video screen is clear during playback; OK or the remote Play/Pause key pauses and resumes it.
 
 The logo asset is downloaded from [N1's own website](https://n1info.ba/media/original_images/n1.max-800x600.original.original.svg) and kept locally as `n1-logo.svg` so the TV interface does not depend on the logo host at runtime.
 
@@ -10,7 +10,7 @@ The logo asset is downloaded from [N1's own website](https://n1info.ba/media/ori
 
 The app loads its channel list and stream URLs **only from GitHub**. `channels.json` in this repository is the source file to publish. It is excluded from the `.wgt` package.
 
-The source is [`channels.json`](https://github.com/edoedac0/N1-App/blob/main/channels.json) in this repository. `settings.js` already points to its raw URL. Later edits to the GitHub file are fetched when the channel list opens; the app does not need rebuilding for stream URL changes. The pre-existing `stream.txt` is retained untouched for the legacy app.
+The source is [`channels.json`](https://github.com/edoedac0/N1-App/blob/main/channels.json) in this repository. `settings.js` already points to its raw URL. The app fetches the file once at startup, then opens the cached three-channel list instantly. GitHub edits appear on the next app launch without rebuilding. The pre-existing `stream.txt` is retained untouched for the legacy app.
 
 For a repository, the URL has this form:
 
@@ -30,7 +30,7 @@ Open this folder as a Tizen TV web application in Tizen Studio, or use the inclu
 ./build.sh YOUR_CERTIFICATE_PROFILE
 ```
 
-The signed package is `dist/N1 TV.wgt`. A Samsung TV certificate profile configured for your device is required to install it. The script copies only the app files to a staging directory, leaving `channels.json` out of the package. The minimum Tizen version is set to 5.5 in `config.xml`.
+The signed package is `dist/N1 TV.wgt`. A Samsung TV certificate profile configured for your device is required to install it. The script copies only the TV app files to a staging directory, leaving `channels.json` and the browser-only hls.js library out of the package. The minimum Tizen version is set to 5.5 in `config.xml`.
 
 ## Remote control
 
@@ -48,7 +48,9 @@ The signed package is `dist/N1 TV.wgt`. A Samsung TV certificate profile configu
 | Back | Player → channels → home; exits from home |
 | OK on a playback error | Retry the stream |
 
-The app uses Samsung AVPlay for HLS on TV and requests the highest available quality at startup. Browsers with native HLS use it directly; other browsers use a locally bundled copy of [hls.js 1.7.3](https://github.com/video-dev/hls.js/releases/tag/v1.7.3). The browser player also starts at the highest listed variant, then adapts if the connection cannot sustain it. The library's MIT license is in `vendor/hls-LICENSE`.
+The app uses Samsung AVPlay for HLS on TV and requests the highest available quality at startup. Browsers with native HLS use it directly; other browsers use a local copy of [hls.js 1.7.3](https://github.com/video-dev/hls.js/releases/tag/v1.7.3), loaded only when needed. The browser player also starts at the highest listed variant, then adapts if the connection cannot sustain it. Its forward and back buffers are limited to 20 seconds. The library's MIT license is in `vendor/hls-LICENSE`.
+
+The three channel buttons are created once when the startup fetch finishes and reused as the remote focus moves. Leaving playback releases the decoder and buffers; putting the app in the background closes the stream and returns to the channel list. The video overlay is a single centered button, with no full-screen wrapper. Layout uses CSS supported by Tizen 5.5's Chromium 69 engine rather than newer `inset` and flexbox `gap` shortcuts.
 
 ## Stream sources
 

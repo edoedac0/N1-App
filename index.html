@@ -36,18 +36,15 @@
         <img class="channels-logo" src="n1-logo.svg" alt="N1">
         <h1>Gledaj uživo</h1>
         <div id="channelList" class="channel-list"></div>
-        <p id="sourceStatus" class="source-status"></p>
       </div>
     </main>
 
     <main id="player" class="screen player" aria-label="Reprodukcija uživo">
       <video id="fallbackVideo" class="fallback-video" autoplay playsinline></video>
-      <div class="pause-layer">
-        <button id="pauseButton" class="pause-control hidden" type="button" aria-label="Pauziraj">
-          <svg class="pause-icon" viewBox="0 0 32 32" aria-hidden="true"><rect x="8" y="6" width="5" height="20" rx="1" fill="currentColor"/><rect x="19" y="6" width="5" height="20" rx="1" fill="currentColor"/></svg>
-          <svg class="resume-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M10 6.8a1.7 1.7 0 0 1 2.6-1.44l15 9.2a1.7 1.7 0 0 1 0 2.88l-15 9.2A1.7 1.7 0 0 1 10 25.2V6.8Z" fill="currentColor"/></svg>
-        </button>
-      </div>
+      <button id="pauseButton" class="pause-control hidden" type="button" aria-label="Pauziraj">
+        <svg class="pause-icon" viewBox="0 0 32 32" aria-hidden="true"><rect x="8" y="6" width="5" height="20" rx="1" fill="currentColor"/><rect x="19" y="6" width="5" height="20" rx="1" fill="currentColor"/></svg>
+        <svg class="resume-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M10 6.8a1.7 1.7 0 0 1 2.6-1.44l15 9.2a1.7 1.7 0 0 1 0 2.88l-15 9.2A1.7 1.7 0 0 1 10 25.2V6.8Z" fill="currentColor"/></svg>
+      </button>
       <div id="playerState" class="player-state hidden"><div class="state-spinner"></div><div id="stateTitle">Povezivanje…</div><p id="stateDetail">Učitavanje programa uživo</p><button id="retryButton" class="retry-button hidden" type="button">Pokušaj ponovo</button></div>
     </main>
   </div>
