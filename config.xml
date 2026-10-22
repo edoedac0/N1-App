@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://n1tv.local/N1TV" version="1.0.0" viewmodes="maximized">
+  <tizen:application id="N1TVAPP001.N1TV" package="N1TVAPP001" required_version="5.5"/>
+  <content src="index.html"/>
+  <icon src="icon.png"/>
+  <name>N1 TV</name>
+  <description>Gledaj N1 kanale uživo na Samsung TV-u.</description>
+  <tizen:profile name="tv-samsung"/>
+  <tizen:privilege name="http://tizen.org/privilege/internet"/>
+  <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+  <access origin="*" subdomains="true"/>
+  <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable" encryption="disable" install-location="auto" pointing-device-support="disable"/>
+</widget>

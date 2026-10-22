@@ -1,0 +1,4 @@
+.tizen-stage/
+.tizen-output/
+dist/
+.DS_Store

@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "channels": [
+    {
+      "id": "ba",
+      "name": "N1 Bosna i Hercegovina",
+      "shortName": "Bosna i Hercegovina",
+      "code": "BA",
+      "url": "https://best-str.umn.cdn.united.cloud/stream?stream=sp1400&sp=n1info&channel=n1bos&u=n1info&p=n1Sh4redSecre7iNf0&player=m3u8"
+    },
+    {
+      "id": "hr",
+      "name": "N1 Hrvatska",
+      "shortName": "Hrvatska",
+      "code": "HR",
+      "url": "https://best-str.umn.cdn.united.cloud/stream?stream=sp1400&sp=n1info&channel=n1hrv&u=n1info&p=n1Sh4redSecre7iNf0&player=m3u8"
+    },
+    {
+      "id": "rs",
+      "name": "N1 Srbija",
+      "shortName": "Srbija",
+      "code": "RS",
+      "url": "https://best-str.umn.cdn.united.cloud/stream?stream=sp1400&sp=n1info&channel=n1srp&u=n1info&p=n1Sh4redSecre7iNf0&player=m3u8"
+    }
+  ]
+}
