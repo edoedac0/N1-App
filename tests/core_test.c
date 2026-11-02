@@ -4,7 +4,7 @@
 #include <string.h>
 
 static int renders, fetches, plays, stops, pauses, saved_theme, scheduled;
-static int last_index, last_generation, last_pause;
+static int last_index, last_generation, last_pause, youtube_opens, youtube_index;
 
 void host_render(void) { renders++; }
 void host_fetch_channels(void) { fetches++; }
@@ -14,6 +14,7 @@ void host_pause(int play, int generation) { pauses++; last_pause = play; last_ge
 void host_save_theme(int dark) { saved_theme = dark; }
 void host_exit(void) {}
 void host_schedule(int kind, int milliseconds, int generation) { (void)kind; (void)milliseconds; (void)generation; scheduled++; }
+void host_open_youtube(int index) { youtube_opens++; youtube_index = index; }
 
 int main(void) {
   FILE *file = fopen("channels.json", "rb");
@@ -33,7 +34,19 @@ int main(void) {
   assert(n1_source_status() == N1_SOURCE_READY);
   assert(strcmp(n1_string_short(0), "Bosna i Hercegovina") == 0);
   assert(strstr(n1_string_url(2), "n1srp"));
+  assert(strcmp(n1_string_youtube(2), "https://www.youtube.com/@N1infoTV") == 0);
   assert(fetches == 1);
+
+  n1_action(N1_YOUTUBE_BUTTON, 0);
+  assert(n1_screen() == N1_YOUTUBE && n1_youtube_focus() == 0);
+  n1_key(39, 0);
+  assert(n1_youtube_focus() == 1);
+  n1_key(13, 0);
+  assert(youtube_opens == 1 && youtube_index == 1);
+  n1_key(51, 0);
+  assert(youtube_opens == 2 && youtube_index == 2);
+  n1_key(10009, 0);
+  assert(n1_screen() == N1_HOME);
 
   n1_action(N1_WATCH, 0);
   assert(n1_screen() == N1_CHANNELS && n1_channel_focus() == 0);

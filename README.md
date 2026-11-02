@@ -1,6 +1,6 @@
 # N1 TV for Samsung Tizen
 
-A minimal Samsung TV app for Tizen 5.5 and newer. Its application logic is written in portable C and compiled to WebAssembly inside a `.wgt` web app. The home screen has **Gledaj uživo** and **N1 TV**. The latter is intentionally inactive. Live TV offers N1 Bosnia and Herzegovina, Croatia, and Serbia.
+A minimal Samsung TV app for Tizen 5.5 and newer. Its application logic is written in portable C and compiled to WebAssembly inside a `.wgt` web app. The home screen has **Gledaj uživo** for live streams and **N1 TV** for the corresponding YouTube channels. Both open the same three-country picker: Bosnia and Herzegovina, Croatia, and Serbia.
 
 The interface starts in light mode, with a white background and a blue spinner only while video connects. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. Tuning to a channel fades in a readable translucent `N1 BiH`, `N1 Hrvatska`, or `N1 Srbija` label when playback starts, then fades it out after three seconds. OK or the remote Play/Pause key pauses and resumes it. Remote focus changes are immediate, without menu transitions or scale effects.
 
@@ -10,7 +10,7 @@ The logo asset is downloaded from [N1's own website](https://n1info.ba/media/ori
 
 ## Publish the channel file
 
-The app loads its channel list and stream URLs **only from GitHub**. `channels.json` in this repository is the source file to publish. It is excluded from the `.wgt` package.
+The app loads its channel list, stream URLs, and YouTube destinations **only from GitHub**. `channels.json` in this repository is the source file to publish. It is excluded from the `.wgt` package.
 
 The source is [`channels.json`](https://github.com/edoedac0/N1-App/blob/main/channels.json) in this repository. `settings.js` already points to its raw URL. The app fetches the file once at startup, then opens the cached three-channel list instantly. GitHub edits appear on the next app launch without rebuilding. The pre-existing `stream.txt` is retained untouched for the legacy app.
 
@@ -42,7 +42,7 @@ To rebuild only the C core, run `./build-core.sh`. It needs Clang with a WebAsse
 | --- | --- |
 | Arrows and OK | Select a menu item or channel |
 | Red key | Open the channel list |
-| 1, 2, 3 | Open Bosnia and Herzegovina, Croatia, Serbia after channels have loaded |
+| 1, 2, 3 | Open Bosnia and Herzegovina, Croatia, Serbia; on the N1 TV picker, open the corresponding YouTube channel |
 | Left / down while playing | Previous channel |
 | Right / up while playing | Next channel |
 | Channel − / + while playing | Previous / next channel |
@@ -54,7 +54,11 @@ To rebuild only the C core, run `./build-core.sh`. It needs Clang with a WebAsse
 
 The app uses Samsung AVPlay for HLS on TV and requests the highest available quality at startup. Browsers with native HLS use it directly; other browsers use a local copy of [hls.js 1.7.3](https://github.com/video-dev/hls.js/releases/tag/v1.7.3), loaded only when needed. The browser player also starts at the highest listed variant, then adapts if the connection cannot sustain it. Its forward and back buffers are limited to 20 seconds. The library's MIT license is in `vendor/hls-LICENSE`.
 
-The three channel buttons are created once when the startup fetch finishes and reused as the remote focus moves. Focus changes write only the DOM values that actually changed; menu animations do not delay remote feedback. Leaving playback releases the decoder and buffers; putting the app in the background closes the stream and returns to the channel list. AVPlay prepares asynchronously and receives its 1920×1080 display rectangle once, immediately before playback. The video overlay is a single centered button, with no full-screen wrapper. Layout uses CSS supported by Tizen 5.5's Chromium 69 engine rather than newer `inset` and flexbox `gap` shortcuts.
+The two sets of three channel buttons are created once when the startup fetch finishes and reused as the remote focus moves. Focus changes write only the DOM values that actually changed; menu animations do not delay remote feedback. Leaving playback releases the decoder and buffers; putting the app in the background closes the stream and returns to the channel list. AVPlay prepares asynchronously and receives its 1920×1080 display rectangle once, immediately before playback. The video overlay is a single centered button, with no full-screen wrapper. Layout uses CSS supported by Tizen 5.5's Chromium 69 engine rather than newer `inset` and flexbox `gap` shortcuts.
+
+## YouTube shortcut
+
+The N1 TV picker uses the same country labels as live TV. Each entry passes its `youtubeUrl` from GitHub to the installed YouTube app with Tizen Application Control. Samsung does not document a guaranteed channel-page deep link for YouTube; the launch request must be checked on the target TV. If YouTube rejects the request, the picker shows an error. A desktop preview opens the URL in a browser tab.
 
 ## Stream sources
 
@@ -70,6 +74,6 @@ Sources: [N1 Bosnia live](https://n1info.ba/n1-tv-live-stream/), [N1 Croatia liv
 
 ## Architecture and TV ports
 
-`src/core.c` owns channel JSON validation, screens, focus, remote key behavior, theme state, player state, and channel switching. It has no Tizen, DOM, network, or media dependencies. A port supplies the eight `host_*` functions in `src/core.h`. `bridge.js` is the Samsung/browser adapter: it renders the existing HTML interface, fetches the GitHub file, and calls AVPlay (or browser HLS for preview). The WebAssembly core is about 7 KB. The adapter is intentionally limited to capabilities C cannot call directly in a web app.
+`src/core.c` owns channel JSON validation, screens, focus, remote key behavior, theme state, player state, and channel switching. It has no Tizen, DOM, network, or media dependencies. A port supplies the nine `host_*` functions in `src/core.h`. `bridge.js` is the Samsung/browser adapter: it renders the existing HTML interface, fetches the GitHub file, and calls AVPlay (or browser HLS for preview). The WebAssembly core is about 7 KB. The adapter is intentionally limited to capabilities C cannot call directly in a web app.
 
 Samsung [supports WebAssembly in TV web apps from Tizen 5.5](https://developer.samsung.com/smarttv/develop/extension-libraries/webassembly/overview.html). This keeps a single `.wgt` target for the requested 5.5+ range and preserves the verified AVPlay path. Samsung's [Smart TV testing FAQ](https://developer.samsung.com/smarttv/develop/faq/application-testing.html) says `.tpk` native packages are not supported in that TV testing path. [Nuvio Native Legacy](https://github.com/iqui27/nuvio-native-legacy) uses a C core with both `.wgt` and experimental `.tpk` front ends; its older-TV `.tpk` notes document signing and native-library loading issues. The portable C core here makes another TV adapter possible without changing the channel/navigation logic. Video decoding still uses each TV's media API, so C does not improve the source stream's resolution.

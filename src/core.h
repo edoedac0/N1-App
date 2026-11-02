@@ -10,11 +10,12 @@ void host_pause(int play, int generation);
 void host_save_theme(int dark);
 void host_exit(void);
 void host_schedule(int kind, int milliseconds, int generation);
+void host_open_youtube(int index);
 
-enum { N1_HOME, N1_CHANNELS, N1_PLAYER };
+enum { N1_HOME, N1_CHANNELS, N1_PLAYER, N1_YOUTUBE };
 enum { N1_SOURCE_LOADING, N1_SOURCE_READY, N1_SOURCE_ERROR };
 enum { N1_VIDEO_LOADING, N1_VIDEO_PLAYING, N1_VIDEO_PAUSED, N1_VIDEO_ERROR };
-enum { N1_WATCH = 1, N1_THEME, N1_SELECT, N1_RETRY, N1_PAUSE_CONTROL };
+enum { N1_WATCH = 1, N1_THEME, N1_SELECT, N1_RETRY, N1_PAUSE_CONTROL, N1_YOUTUBE_BUTTON, N1_YOUTUBE_SELECT };
 enum { N1_TIMER_BADGE = 1, N1_TIMER_CONTROL };
 
 void n1_init(int dark);
@@ -37,11 +38,13 @@ int n1_theme(void);
 int n1_theme_focus(void);
 int n1_home_focus(void);
 int n1_channel_focus(void);
+int n1_youtube_focus(void);
 int n1_current_index(void);
 int n1_generation(void);
 int n1_badge_visible(void);
 int n1_control_visible(void);
 const char *n1_string_short(int index);
 const char *n1_string_url(int index);
+const char *n1_string_youtube(int index);
 
 #endif

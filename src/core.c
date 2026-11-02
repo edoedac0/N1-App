@@ -3,17 +3,19 @@
 #define JSON_CAPACITY 8192
 #define SHORT_CAPACITY 96
 #define URL_CAPACITY 768
+#define YOUTUBE_CAPACITY 160
 
 typedef struct {
   char id[4];
   char short_name[SHORT_CAPACITY];
   char url[URL_CAPACITY];
+  char youtube_url[YOUTUBE_CAPACITY];
 } Channel;
 
 static char json[JSON_CAPACITY];
 static Channel channels[3];
 static int view, source_status, video_status, dark_theme, theme_focus;
-static int home_focus, channel_focus, current_index, generation;
+static int home_focus, channel_focus, youtube_focus, current_index, generation;
 static int badge_visible, control_visible, playback_ready;
 static int length, cursor;
 
@@ -142,7 +144,7 @@ static int skip_value(int depth) {
 static int parse_channel(Channel *item) {
   char key[64];
   int found = 0;
-  item->id[0] = item->short_name[0] = item->url[0] = 0;
+  item->id[0] = item->short_name[0] = item->url[0] = item->youtube_url[0] = 0;
   if (!take('{')) { return 0; }
   if (take('}')) { return 0; }
   do {
@@ -150,8 +152,9 @@ static int parse_channel(Channel *item) {
     if (equal(key, "id")) { if (!string(item->id, sizeof item->id)) { return 0; } found |= 1; }
     else if (equal(key, "shortName")) { if (!string(item->short_name, sizeof item->short_name)) { return 0; } found |= 2; }
     else if (equal(key, "url")) { if (!string(item->url, sizeof item->url)) { return 0; } found |= 4; }
+    else if (equal(key, "youtubeUrl")) { if (!string(item->youtube_url, sizeof item->youtube_url)) { return 0; } found |= 8; }
     else if (!skip_value(0)) { return 0; }
-    if (take('}')) { return found == 7; }
+    if (take('}')) { return found == 15; }
   } while (take(','));
   return 0;
 }
@@ -180,7 +183,7 @@ static int parse_channels(Channel out[3]) {
   if (!found || count != 3 || cursor != length) { return 0; }
   for (i = 0; i < 3; i++) {
     const char *expected = i == 0 ? "ba" : i == 1 ? "hr" : "rs";
-    if (!equal(out[i].id, expected) || !out[i].short_name[0] || !https(out[i].url)) { return 0; }
+    if (!equal(out[i].id, expected) || !out[i].short_name[0] || !https(out[i].url) || !https(out[i].youtube_url)) { return 0; }
   }
   return 1;
 }
@@ -198,6 +201,16 @@ static void show_channels(void) {
   channel_focus = current_index < 0 ? 0 : current_index;
   render();
 }
+static void show_youtube(void) {
+  if (view == N1_PLAYER) { stop_video(); }
+  view = N1_YOUTUBE;
+  theme_focus = 0;
+  youtube_focus = 0;
+  render();
+}
+static void open_youtube(int index) {
+  if (source_status == N1_SOURCE_READY && index >= 0 && index < 3) { host_open_youtube(index); }
+}
 static void start_channel(int index) {
   if (source_status != N1_SOURCE_READY || index < 0 || index > 2) { return; }
   if (view == N1_PLAYER) { stop_video(); }
@@ -211,7 +224,7 @@ static void start_channel(int index) {
 }
 static void back(void) {
   if (view == N1_PLAYER) { show_channels(); }
-  else if (view == N1_CHANNELS) { view = N1_HOME; theme_focus = 0; render(); }
+  else if (view == N1_CHANNELS || view == N1_YOUTUBE) { view = N1_HOME; theme_focus = 0; render(); }
   else { host_exit(); }
 }
 static void toggle_theme(void) {
@@ -236,7 +249,7 @@ void n1_init(int dark) {
   source_status = N1_SOURCE_LOADING;
   video_status = N1_VIDEO_LOADING;
   dark_theme = !!dark;
-  theme_focus = home_focus = channel_focus = 0;
+  theme_focus = home_focus = channel_focus = youtube_focus = 0;
   current_index = -1;
   generation = 0;
   badge_visible = control_visible = playback_ready = 0;
@@ -256,6 +269,7 @@ int n1_receive_json(int size) {
     copy_string(channels[i].id, parsed[i].id, sizeof channels[i].id);
     copy_string(channels[i].short_name, parsed[i].short_name, sizeof channels[i].short_name);
     copy_string(channels[i].url, parsed[i].url, sizeof channels[i].url);
+    copy_string(channels[i].youtube_url, parsed[i].youtube_url, sizeof channels[i].youtube_url);
   }
   source_status = N1_SOURCE_READY;
   channel_focus = 0;
@@ -266,6 +280,8 @@ void n1_channels_failed(void) { source_status = N1_SOURCE_ERROR; render(); }
 void n1_action(int action, int index) {
   if (action == N1_THEME) { if (view != N1_PLAYER) { toggle_theme(); } }
   else if (action == N1_WATCH) { show_channels(); }
+  else if (action == N1_YOUTUBE_BUTTON) { show_youtube(); }
+  else if (action == N1_YOUTUBE_SELECT) { open_youtube(index); }
   else if (action == N1_SELECT) { start_channel(index); }
   else if (action == N1_RETRY) { if (view == N1_PLAYER && video_status == N1_VIDEO_ERROR) { start_channel(current_index); } else if (source_status == N1_SOURCE_ERROR) { source_status = N1_SOURCE_LOADING; render(); host_fetch_channels(); } }
   else if (action == N1_PAUSE_CONTROL) { pause_video(0); }
@@ -273,12 +289,12 @@ void n1_action(int action, int index) {
 void n1_key(int key, int repeat) {
   if (key == 10009 || key == 8 || key == 27) { back(); return; }
   if (key == 403) { show_channels(); return; }
-  if (key >= 49 && key <= 51) { start_channel(key - 49); return; }
+  if (key >= 49 && key <= 51) { if (view == N1_YOUTUBE) { open_youtube(key - 49); } else { start_channel(key - 49); } return; }
   if (view == N1_HOME) {
     if (key == 38) { theme_focus = 1; render(); }
     else if (key == 40) { theme_focus = 0; render(); }
     else if (key == 37 || key == 39) { theme_focus = 0; home_focus = key == 37 ? 0 : 1; render(); }
-    else if (key == 13) { if (theme_focus) { toggle_theme(); } else if (home_focus == 0) { show_channels(); } }
+    else if (key == 13) { if (theme_focus) { toggle_theme(); } else if (home_focus == 0) { show_channels(); } else { show_youtube(); } }
   } else if (view == N1_CHANNELS) {
     if (key == 38 && (theme_focus || channel_focus == 0)) { theme_focus = 1; render(); }
     else if (key == 40 && theme_focus) { theme_focus = 0; channel_focus = 0; render(); }
@@ -286,6 +302,13 @@ void n1_key(int key, int repeat) {
     else if (key == 37 || key == 38) { theme_focus = 0; channel_focus = (channel_focus + 2) % 3; render(); }
     else if (key == 39 || key == 40) { theme_focus = 0; channel_focus = (channel_focus + 1) % 3; render(); }
     else if (key == 13) { if (theme_focus) { toggle_theme(); } else { start_channel(channel_focus); } }
+  } else if (view == N1_YOUTUBE) {
+    if (key == 38 && (theme_focus || youtube_focus == 0)) { theme_focus = 1; render(); }
+    else if (key == 40 && theme_focus) { theme_focus = 0; youtube_focus = 0; render(); }
+    else if (source_status != N1_SOURCE_READY) { if (key == 13) { if (theme_focus) { toggle_theme(); } else if (source_status == N1_SOURCE_ERROR) { n1_action(N1_RETRY, 0); } } }
+    else if (key == 37 || key == 38) { theme_focus = 0; youtube_focus = (youtube_focus + 2) % 3; render(); }
+    else if (key == 39 || key == 40) { theme_focus = 0; youtube_focus = (youtube_focus + 1) % 3; render(); }
+    else if (key == 13) { if (theme_focus) { toggle_theme(); } else { open_youtube(youtube_focus); } }
   } else if (view == N1_PLAYER) {
     if (repeat && (key == 37 || key == 38 || key == 39 || key == 40 || key == 427 || key == 428 || key == 10232 || key == 10233)) { return; }
     if (key == 37 || key == 40 || key == 428 || key == 10232) { start_channel((current_index + 2) % 3); }
@@ -333,9 +356,11 @@ int n1_theme(void) { return dark_theme; }
 int n1_theme_focus(void) { return theme_focus; }
 int n1_home_focus(void) { return home_focus; }
 int n1_channel_focus(void) { return channel_focus; }
+int n1_youtube_focus(void) { return youtube_focus; }
 int n1_current_index(void) { return current_index; }
 int n1_generation(void) { return generation; }
 int n1_badge_visible(void) { return badge_visible; }
 int n1_control_visible(void) { return control_visible; }
 const char *n1_string_short(int index) { return index >= 0 && index < 3 ? channels[index].short_name : 0; }
 const char *n1_string_url(int index) { return index >= 0 && index < 3 ? channels[index].url : 0; }
+const char *n1_string_youtube(int index) { return index >= 0 && index < 3 ? channels[index].youtube_url : 0; }

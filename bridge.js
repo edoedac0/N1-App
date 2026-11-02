@@ -4,6 +4,7 @@
 
   var api, memory, decoder;
   var cards = [];
+  var youtubeCards = [];
   var sourceView = "";
   var sourceMessage = "Kanali nisu dostupni. Pritisnite OK za ponovni pokušaj.";
   var videoMessage = "Pokušajte ponovo ili izaberite drugi kanal.";
@@ -17,8 +18,10 @@
   var hlsScriptCallbacks = [];
   var usingAvplay = !!(window.webapis && window.webapis.avplay);
   var app = document.getElementById("app");
-  var screens = [document.getElementById("home"), document.getElementById("channels"), document.getElementById("player")];
+  var screens = [document.getElementById("home"), document.getElementById("channels"), document.getElementById("player"), document.getElementById("youtube")];
   var channelList = document.getElementById("channelList");
+  var youtubeList = document.getElementById("youtubeList");
+  var youtubeStatus = document.getElementById("youtubeStatus");
   var fallbackVideo = document.getElementById("fallbackVideo");
   var channelBadge = document.getElementById("channelBadge");
   var pauseButton = document.getElementById("pauseButton");
@@ -38,25 +41,30 @@
   }
   function channelName(index) { return readString(api.n1_string_short(index)); }
   function channelUrl(index) { return readString(api.n1_string_url(index)); }
+  function youtubeUrl(index) { return readString(api.n1_string_youtube(index)); }
   function action(kind, index) { api.n1_action(kind, index || 0); }
   function setClass(element, value) { if (element.className !== value) { element.className = value; } }
   function setText(element, value) { if (element.textContent !== value) { element.textContent = value; } }
   function setLabel(element, value) { if (element.getAttribute("aria-label") !== value) { element.setAttribute("aria-label", value); } }
 
-  function buildCards() {
-    if (cards.length) { return; }
-    channelList.innerHTML = "";
-    sourceView = "ready";
+  function makeCards(list, target, actionKind) {
+    target.innerHTML = "";
     for (var i = 0; i < 3; i++) {
       var button = document.createElement("button");
       button.type = "button";
       button.className = "channel-card";
       button.innerHTML = '<span class="channel-name"></span><svg class="channel-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       button.querySelector(".channel-name").textContent = channelName(i);
-      button.onclick = (function (index) { return function () { action(3, index); }; })(i);
-      channelList.appendChild(button);
-      cards.push(button);
+      button.onclick = (function (index) { return function () { action(actionKind, index); }; })(i);
+      target.appendChild(button);
+      list.push(button);
     }
+  }
+  function buildCards() {
+    if (cards.length) { return; }
+    sourceView = "ready";
+    makeCards(cards, channelList, 3);
+    makeCards(youtubeCards, youtubeList, 7);
   }
   function render() {
     var screen = api.n1_screen();
@@ -68,8 +76,8 @@
     setLabel(themeToggle, dark ? "Uključi svijetli način" : "Uključi tamni način");
     setClass(themeToggle, "theme-toggle" + (themeFocused ? " focused" : ""));
     setClass(app, "app" + (screen === 2 ? " playing" : ""));
-    for (var i = 0; i < 3; i++) {
-      var screenClass = "screen " + ["home", "channels", "player"][i] + (i === screen ? " active" : "");
+    for (var i = 0; i < 4; i++) {
+      var screenClass = "screen " + ["home", "channels", "player", "channels"][i] + (i === screen ? " active" : "");
       if (i === 2 && screen === 2 && (video === 0 || video === 3)) { screenClass += video === 0 ? " loading" : " error"; }
       setClass(screens[i], screenClass);
     }
@@ -78,12 +86,14 @@
     if (status === 1) {
       buildCards();
       for (i = 0; i < cards.length; i++) { setClass(cards[i], "channel-card" + (!themeFocused && api.n1_channel_focus() === i ? " focused" : "")); }
+      for (i = 0; i < youtubeCards.length; i++) { setClass(youtubeCards[i], "channel-card" + (!themeFocused && api.n1_youtube_focus() === i ? " focused" : "")); }
     } else if (cards.length === 0) {
       var nextSourceView = status === 0 ? "loading" : "error:" + sourceMessage;
       if (sourceView !== nextSourceView) {
         channelList.innerHTML = status === 0 ? '<div class="source-message">Učitavanje kanala…</div>' : '<div class="source-error"></div>';
         if (status === 2) { channelList.firstChild.textContent = sourceMessage; }
         sourceView = nextSourceView;
+        youtubeList.innerHTML = channelList.innerHTML;
       }
     }
     if (screen === 2) {
@@ -100,6 +110,34 @@
         setClass(retryButton, video === 3 ? "retry-button focused" : "retry-button hidden");
       } else { setClass(playerState, "player-state hidden"); }
     } else { setClass(channelBadge, "channel-badge hidden"); }
+  }
+
+  function openYoutube(index) {
+    var url = youtubeUrl(index);
+    setText(youtubeStatus, "");
+    if (!/^https:\/\/www\.youtube\.com\//.test(url)) { setText(youtubeStatus, "YouTube adresa nije dostupna."); return; }
+    if (!window.tizen || !window.tizen.application) {
+      window.open(url, "_blank");
+      return;
+    }
+    var manager = window.tizen.application;
+    var control;
+    try { control = new window.tizen.ApplicationControl("http://tizen.org/appcontrol/operation/view", url, "text/html"); }
+    catch (error) { setText(youtubeStatus, "Nije moguće otvoriti YouTube: " + (error.name || error.message)); return; }
+    function launch(id) {
+      try {
+        manager.launchAppControl(control, id, function () { setText(youtubeStatus, ""); },
+          function (error) { setText(youtubeStatus, "YouTube nije otvorio kanal (" + (error.name || "greška") + ")."); });
+      } catch (error) { setText(youtubeStatus, "YouTube nije otvorio kanal (" + (error.name || "greška") + ")."); }
+    }
+    try {
+      manager.getAppsInfo(function (apps) {
+        for (var i = 0; i < apps.length; i++) {
+          if (/youtube/i.test(apps[i].name || "") || /TizenYouTube/i.test(apps[i].id || "")) { launch(apps[i].id); return; }
+        }
+        setText(youtubeStatus, "YouTube aplikacija nije pronađena na TV-u.");
+      }, function (error) { setText(youtubeStatus, "Nije moguće pronaći YouTube (" + (error.name || "greška") + ")."); });
+    } catch (error2) { setText(youtubeStatus, "Nije moguće pronaći YouTube (" + (error2.name || "greška") + ")."); }
   }
 
   function fetchChannels() {
@@ -259,6 +297,7 @@
       host_play: play,
       host_stop: stop,
       host_pause: pause,
+      host_open_youtube: openYoutube,
       host_save_theme: function (dark) { try { window.localStorage.setItem("n1-theme", dark ? "dark" : "light"); } catch (ignore) {} },
       host_exit: function () { if (window.tizen && window.tizen.application) { try { window.tizen.application.getCurrentApplication().exit(); } catch (ignore) {} } },
       host_schedule: function (kind, milliseconds, token) { setTimeout(function () { api.n1_timer(kind, token); }, milliseconds); }
@@ -268,6 +307,7 @@
       memory = api.memory;
       decoder = new TextDecoder("utf-8");
       watchButton.onclick = function () { action(1, 0); };
+      n1Button.onclick = function () { action(6, 0); };
       themeToggle.onclick = function () { action(2, 0); };
       pauseButton.onclick = function (event) { event.stopPropagation(); action(5, 0); };
       retryButton.onclick = function () { action(4, 0); };

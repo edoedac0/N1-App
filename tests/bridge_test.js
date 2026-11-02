@@ -55,7 +55,7 @@ function makeDom() {
 
 async function run(withAvplay) {
   const {element, document} = makeDom();
-  const keys = [], urls = [], modes = [], properties = [], displayRects = [], avplayCalls = [];
+  const keys = [], urls = [], modes = [], properties = [], displayRects = [], avplayCalls = [], youtubeCalls = [];
   let fetches = 0, state = 'NONE', hlsInstance;
   class XHR {
     open() {}
@@ -92,7 +92,14 @@ async function run(withAvplay) {
     N1_REMOTE_CHANNELS_URL: 'https://raw.githubusercontent.com/edoedac0/N1-App/main/channels.json',
     WebAssembly,
     Hls,
-    tizen: {tvinputdevice:{registerKey(k){keys.push(k);}}},
+    tizen: {
+      tvinputdevice:{registerKey(k){keys.push(k);}},
+      ApplicationControl: function(operation, uri, mime) { this.operation=operation; this.uri=uri; this.mime=mime; },
+      application: {
+        getAppsInfo(ok) { ok([{id:'9Ur5IzDKqV.TizenYouTube',name:'YouTube'}]); },
+        launchAppControl(control, id, ok) { youtubeCalls.push({control,id}); ok(); }
+      }
+    },
     localStorage: {getItem(){return null;},setItem(){}},
     addEventListener(){}
   };
@@ -108,7 +115,15 @@ async function run(withAvplay) {
 
   assert.equal(fetches,1);
   assert.equal(element('channelList').children.length,3);
+  assert.equal(element('youtubeList').children.length,3);
   assert(keys.includes('MediaPlayPause') && keys.includes('ChannelUp'));
+  element('n1Button').onclick();
+  assert.equal(element('youtube').className,'screen channels active');
+  key(39);
+  key(13);
+  assert.equal(youtubeCalls[0].id,'9Ur5IzDKqV.TizenYouTube');
+  assert.equal(youtubeCalls[0].control.uri,'https://www.youtube.com/@N1_Hrvatska');
+  key(10009);
   const homeWrites = element('home').classWrites;
   key(39);
   assert.equal(element('home').classWrites,homeWrites);
