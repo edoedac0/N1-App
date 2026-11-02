@@ -122,7 +122,9 @@
     }
     var manager = window.tizen.application;
     var control;
-    try { control = new window.tizen.ApplicationControl("http://tizen.org/appcontrol/operation/view", url, "text/html"); }
+    var handle = url.substring(url.lastIndexOf("/") + 1);
+    var searchUrl = "https://www.youtube.com/tv?launch=search&q=" + encodeURIComponent(handle);
+    try { control = new window.tizen.ApplicationControl("http://tizen.org/appcontrol/operation/view", searchUrl, "text/html", null, [], "SINGLE"); }
     catch (error) { setText(youtubeStatus, "Nije moguće otvoriti YouTube: " + (error.name || error.message)); return; }
     function launch(id) {
       try {
@@ -133,7 +135,10 @@
     try {
       manager.getAppsInfo(function (apps) {
         for (var i = 0; i < apps.length; i++) {
-          if (/youtube/i.test(apps[i].name || "") || /TizenYouTube/i.test(apps[i].id || "")) { launch(apps[i].id); return; }
+          if (apps[i].id === "9Ur5IzDKqV.TizenYouTube") { launch(apps[i].id); return; }
+        }
+        for (var i = 0; i < apps.length; i++) {
+          if (/^YouTube$/i.test(apps[i].name || "") && !/YouTubeTV|YouTubeKids/i.test(apps[i].id || "")) { launch(apps[i].id); return; }
         }
         setText(youtubeStatus, "YouTube aplikacija nije pronađena na TV-u.");
       }, function (error) { setText(youtubeStatus, "Nije moguće pronaći YouTube (" + (error.name || "greška") + ")."); });

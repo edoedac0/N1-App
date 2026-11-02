@@ -8,6 +8,7 @@ const html = fs.readFileSync(root + '/index.html', 'utf8');
 const css = fs.readFileSync(root + '/style.css', 'utf8');
 assert(html.indexOf('type="application/avplayer"') > 0);
 assert(html.indexOf('type="application/avplayer"') < html.indexOf('id="app"'));
+assert(html.indexOf('localStorage.getItem("n1-theme")') < html.indexOf('href="style.css"'));
 assert(css.includes('html,body{width:100%;height:100%;margin:0;overflow:hidden;background:transparent'));
 assert(css.includes('.app.playing{background:transparent}'));
 
@@ -94,9 +95,9 @@ async function run(withAvplay) {
     Hls,
     tizen: {
       tvinputdevice:{registerKey(k){keys.push(k);}},
-      ApplicationControl: function(operation, uri, mime) { this.operation=operation; this.uri=uri; this.mime=mime; },
+      ApplicationControl: function(operation, uri, mime, category, data, launchMode) { this.operation=operation; this.uri=uri; this.mime=mime; this.launchMode=launchMode; },
       application: {
-        getAppsInfo(ok) { ok([{id:'9Ur5IzDKqV.TizenYouTube',name:'YouTube'}]); },
+        getAppsInfo(ok) { ok([{id:'Other.YouTube',name:'YouTube'},{id:'9Ur5IzDKqV.TizenYouTube',name:'YouTube'}]); },
         launchAppControl(control, id, ok) { youtubeCalls.push({control,id}); ok(); }
       }
     },
@@ -122,7 +123,8 @@ async function run(withAvplay) {
   key(39);
   key(13);
   assert.equal(youtubeCalls[0].id,'9Ur5IzDKqV.TizenYouTube');
-  assert.equal(youtubeCalls[0].control.uri,'https://www.youtube.com/@N1_Hrvatska');
+  assert.equal(youtubeCalls[0].control.uri,'https://www.youtube.com/tv?launch=search&q=%40N1_Hrvatska');
+  assert.equal(youtubeCalls[0].control.launchMode,'SINGLE');
   key(10009);
   const homeWrites = element('home').classWrites;
   key(39);

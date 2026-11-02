@@ -2,7 +2,7 @@
 
 A minimal Samsung TV app for Tizen 5.5 and newer. Its application logic is written in portable C and compiled to WebAssembly inside a `.wgt` web app. The home screen has **Gledaj uživo** for live streams and **N1 TV** for the corresponding YouTube channels. Both open the same three-country picker: Bosnia and Herzegovina, Croatia, and Serbia.
 
-The interface starts in light mode, with a white background and a blue spinner only while video connects. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. Tuning to a channel fades in a readable translucent `N1 BiH`, `N1 Hrvatska`, or `N1 Srbija` label when playback starts, then fades it out after three seconds. OK or the remote Play/Pause key pauses and resumes it. Remote focus changes are immediate, without menu transitions or scale effects.
+The interface starts in the last selected theme without a light-to-dark flash, with a blue spinner only while video connects. The moon/sun button in the upper right switches between light and dark mode and remembers the choice. Tuning to a channel fades in a readable translucent `N1 BiH`, `N1 Hrvatska`, or `N1 Srbija` label when playback starts, then fades it out after three seconds. OK or the remote Play/Pause key pauses and resumes it. Remote focus changes are immediate, without menu transitions or scale effects.
 
 On Samsung TVs, AVPlay renders video on a hardware plane behind the web page. The app includes the required `application/avplayer` object and keeps the page transparent during playback, allowing the picture to show through while the pause and channel overlays remain visible. This fixes audio-only playback caused by an opaque page or missing AVPlay object.
 
@@ -58,7 +58,7 @@ The two sets of three channel buttons are created once when the startup fetch fi
 
 ## YouTube shortcut
 
-The N1 TV picker uses the same country labels as live TV. Each entry passes its `youtubeUrl` from GitHub to the installed YouTube app with Tizen Application Control. Samsung does not document a guaranteed channel-page deep link for YouTube; the launch request must be checked on the target TV. If YouTube rejects the request, the picker shows an error. A desktop preview opens the URL in a browser tab.
+The N1 TV picker uses the same country labels as live TV. Each entry uses its `youtubeUrl` from GitHub to build a YouTube TV search deep link for that channel handle. The shortcut targets Samsung's stock YouTube app before any other app named YouTube and requests a standalone launch. The previous direct channel-page URL was ignored by the tested TV; whether this search deep link is honored still needs a TV check. If YouTube rejects the request, the picker shows an error. A desktop preview opens the URL in a browser tab.
 
 ## Stream sources
 
